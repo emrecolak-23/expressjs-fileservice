@@ -1,0 +1,6 @@
+export enum UserType {
+    ISTEYIM = "ISTEYIM",
+    INMIDI = "INMIDI",
+    INMIDI_BACKOFFICE= "INMIDI_BACKOFFICE",
+    ROLE_ADMIN = "ROLE_ADMIN",
+}
