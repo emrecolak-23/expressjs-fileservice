@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= fullName %> - CV</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css?family=Montserrat:400,500,700&display=swap");
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        list-style: none;
+        font-family: "Montserrat", sans-serif;
+      }
+
+      body {
+        background: transparent;
+        font-size: 14px;
+        line-height: 22px;
+        color: #555555;
+      }
+
+      .bold {
+        font-weight: 700;
+        font-size: 20px;
+        text-transform: uppercase;
+      }
+
+      .semi-bold {
+        font-weight: 500;
+        font-size: 16px;
+      }
+
+      .resume {
+        width: 800px;
+        margin: 50px auto;
+        border: 1px solid #555555;
+        display: table;
+      }
+
+      .resume_left,
+      .resume_right {
+        display: table-cell;
+        vertical-align: top;
+      }
+
+      .resume_left {
+        width: 280px;
+        background: #000;
+      }
+
+      .resume_right {
+        width: 520px;
+        background: #fff;
+        padding: 25px;
+        position: relative;
+      }
+
+      .resume_profile {
+        width: 100%;
+        height: 280px;
+      }
+
+      .separator {
+        margin: 20px 0;
+      }
+
+      .resume_profile img {
+        width: 100%;
+        height: 100%;
+      }
+
+      .resume .resume_left .resume_content {
+        padding: 0 18px;
+      }
+
+      .resume .title {
+        margin-bottom: 20px;
+        background: #0057ff;
+        padding: 10px;
+      }
+
+      .resume .resume_left .bold {
+        color: #fff;
+      }
+      .resume .resume_left .regular {
+        color: #fff;
+      }
+
+      .resume .resume_item {
+        padding: 25px 0;
+        border-bottom: 2px solid #0057ff;
+      }
+
+      .resume .resume_left .resume_item:last-child,
+      .resume .resume_right .resume_item:last-child {
+        border-bottom: 0px;
+      }
+
+      .resume .resume_left ul li {
+        margin-bottom: 10px;
+        align-items: center;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .resume .resume_left ul li:last-child {
+        margin-bottom: 0;
+      }
+
+      .resume .resume_left ul li .icon {
+        width: 35px;
+        height: 35px;
+        background: transparent;
+        color: #0057ff;
+        border-radius: 50%;
+        font-size: 20px;
+        display: inline-block;
+        position: relative;
+      }
+
+      .resume .resume_left ul li .icon img {
+        width: 20px;
+        height: 20px;
+        margin-top: 7px;
+      }
+
+      .resume .icon i {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+
+      .resume .upper_info {
+        display: flex;
+        flex: 1;
+        flex-direction: row;
+        justify-content: space-between;
+      }
+
+      .resume .resume_left ul li .data {
+        color: #fff;
+        display: inline-block;
+        position: absolute;
+        top: 30%;
+        transform: translateY(-62%);
+      }
+
+      .resume .resume_left .resume_documents ul li,
+      .resume .resume_left .resume_languages ul li {
+        margin-bottom: 10px;
+        color: #fff;
+        justify-content: space-between;
+        align-items: center;
+        overflow: hidden;
+      }
+
+      .resume .resume_left .resume_languages ul li .language_name {
+        width: 25%;
+        display: inline-block;
+      }
+
+      .resume .resume_left .resume_languages ul li .language_progress {
+        width: 60%;
+        margin: 0 5px;
+        height: 5px;
+        background: #0057ff;
+        position: relative;
+        display: inline-block;
+      }
+
+      .resume .resume_left .resume_languages ul li .language_per {
+        width: 15%;
+        display: inline-block;
+      }
+
+      .resume .resume_left .resume_languages ul li .language_progress span {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        background: #fff;
+      }
+      .resume .resume_left .resume_social ul {
+        text-align: center;
+        padding: 0;
+        margin: 0;
+      }
+
+      .resume .resume_left .resume_social ul li {
+        display: inline-block;
+        list-style: none;
+        margin: 0 5px 10px 5px;
+      }
+
+      .resume .resume_left .resume_social .semi-bold {
+        color: #fff;
+        margin-bottom: 3px;
+      }
+
+      .resume .resume_left .resume_social ul li .icon {
+        background: #fff;
+        font-size: 17px;
+        margin-right: 0;
+      }
+
+      .resume .resume_right .bold {
+        color: #fff;
+      }
+
+      .resume .resume_right .resume_additional_area ul,
+      .resume .resume_right .resume_work ul,
+      .resume .resume_right .resume_education ul {
+        padding-left: 40px;
+        overflow: hidden;
+      }
+
+      .resume .resume_right ul li {
+        position: relative;
+      }
+
+      .resume .resume_right ul li .date {
+        font-size: 16px;
+        font-weight: 500;
+        margin-bottom: 10px;
+      }
+
+      .resume .resume_right ul li .info {
+        margin-bottom: 20px;
+      }
+
+      .resume .resume_right ul li:last-child .info {
+        margin-bottom: 0;
+      }
+
+      .resume .resume_right .resume_additional_area ul li:before,
+      .resume .resume_right .resume_work ul li:before,
+      .resume .resume_right .resume_education ul li:before {
+        content: "";
+        position: absolute;
+        top: 5px;
+        left: -25px;
+        width: 11px;
+        height: 11px;
+        border: 2px solid #0057ff;
+        background: #0057ff;
+      }
+
+      .resume_footer {
+        background: #0057ff;
+        width: 100%;
+        height: 20px;
+        bottom: 0px;
+        left: 0px;
+        position: absolute;
+      }
+    </style>
+    <script src="https://kit.fontawesome.com/b99e675b6e.js"></script>
+  </head>
+  <body>
+    <div class="resume">
+      <div class="resume_right">
+        <div class="resume_item resume_about">
+          <% if (about) { %>
+          <div class="title">
+            <p class="bold">About us</p>
+          </div>
+          <p><%= about %></p>
+          <% } %>
+        </div>
+        <div class="resume_item resume_education">
+          <div class="title">
+            <p class="bold">Education</p>
+          </div>
+          <ul>
+            <% education.forEach(item => { %>
+            <li>
+              <div class="upper_info">
+                <div class="date"><%= item.date %></div>
+                <p class="semi-bold">
+                  <%= item.grade %> / <%= item.gradingSystem %>
+                </p>
+              </div>
+              <div class="info">
+                <p class="semi-bold"><%= item.faculty %></p>
+                <p class="semi-bold"><%= item.university %></p>
+                <p><%= item.department %></p>
+              </div>
+            </li>
+            <% }); %>
+          </ul>
+        </div>
+        <div class="resume_item resume_work">
+          <div class="title">
+            <p class="bold">Work Experience</p>
+          </div>
+          <ul>
+            <% workExperience.forEach(item => { %>
+            <li>
+              <div class="upper_info">
+                <div class="date"><%= item.date %></div>
+                <p class="semi-bold"><%= item.company %></p>
+              </div>
+              <div class="info">
+                <p class="semi-bold"><%= item.position %></p>
+              </div>
+            </li>
+            <% }); %>
+          </ul>
+        </div>
+        <div class="resume_item resume_additional_area">
+          <div class="title">
+            <p class="bold">Certificates</p>
+          </div>
+          <ul>
+            <% certificates.forEach(item => { %>
+            <li>
+              <div class="upper_info">
+                <div class="date"><%= item.date %></div>
+                <p class="semi-bold"><%= item.institution %></p>
+              </div>
+              <div class="info">
+                <p class="semi-bold"><%= item.title %></p>
+              </div>
+            </li>
+            <% }); %>
+          </ul>
+        </div>
+        <div class="resume_item resume_additional_area">
+          <div class="title">
+            <p class="bold">References</p>
+          </div>
+          <ul>
+            <% references.forEach(item => { %>
+            <li>
+              <div class="upper_info">
+                <div><%= item.name %></div>
+                <p class="semi-bold"><%= item.company %></p>
+              </div>
+              <div class="info">
+                <p class="semi-bold"><%= item.position %></p>
+                <p><%= item.phone %></p>
+                <p><%= item.email %></p>
+              </div>
+            </li>
+            <% }); %>
+          </ul>
+        </div>
+        <div class="resume_item resume_additional_area">
+          <div class="title">
+            <p class="bold">Fields to work</p>
+          </div>
+          <ul>
+            <% fieldsToWork.forEach(item => { %>
+            <li>
+              <div class="upper_info">
+                <div><%= item.field %></div>
+                <p class="semi-bold"><%= item.experienceYears %></p>
+              </div>
+            </li>
+            <% }); %>
+          </ul>
+        </div>
+
+        <div class="separator"></div>
+        <div class="resume_item resume_footer"></div>
+      </div>
+      <div class="resume_left">
+        <div class="resume_profile">
+          <img src="<%= photoUrl %>" alt="profile_pic" />
+        </div>
+        <div class="resume_content">
+          <div class="resume_item resume_info">
+            <div class="title">
+              <p class="bold"><%= fullName %></p>
+              <p class="regular"><%= profession %></p>
+            </div>
+            <ul>
+              <li>
+                <div class="icon">
+                  <img
+                    src="https://backoffice-test.isteyim.com/resume/icon/map.svg"
+                  />
+                </div>
+                <div class="data">Talas / KAYSERİ</div>
+              </li>
+              <li>
+                <div class="icon">
+                  <img
+                    src="https://backoffice-test.isteyim.com/resume/icon/phone.svg"
+                  />
+                </div>
+                <div class="data"><%= phoneNumber %></div>
+              </li>
+              <li>
+                <div class="icon">
+                  <img
+                    src="https://backoffice-test.isteyim.com/resume/icon/envelope.svg"
+                  />
+                </div>
+                <div class="data"><%= email %></div>
+              </li>
+              <li>
+                <div class="icon">
+                  <img
+                    src="https://backoffice-test.isteyim.com/resume/icon/globe.svg"
+                  />
+                </div>
+                <div class="data">www.omeryaldirgan.com</div>
+              </li>
+            </ul>
+          </div>
+
+          <div class="resume_item resume_documents">
+            <div class="title">
+              <p class="bold">Documents</p>
+            </div>
+            <ul>
+              <% documents.forEach(item => { %>
+              <li>
+                <div class="upper_info">
+                  <p><%= item.type %></p>
+                  <p><%= item.details %></p>
+                </div>
+              </li>
+              <% }); %>
+            </ul>
+          </div>
+
+          <div class="resume_item resume_languages">
+            <div class="title">
+              <p class="bold">Languages</p>
+            </div>
+            <ul>
+              <% languages.forEach(item => { %>
+              <li>
+                <div class="language_name"><%= item.language %></div>
+                <div class="language_progress" style="width: 100%">
+                  <span style="width: 100%"></span>
+                </div>
+                <div class="language_per"><%= item.levelLabel %></div>
+              </li>
+              <% }); %>
+            </ul>
+          </div>
+
+          <div class="resume_item resume_social">
+            <div class="title">
+              <p class="bold">Social</p>
+            </div>
+            <ul>
+              <li>
+                <div class="icon">
+                  <img
+                    src="https://backoffice-test.isteyim.com/resume/icon/instagram.svg"
+                  />
+                </div>
+              </li>
+              <li>
+                <div class="icon">
+                  <img
+                    src="https://backoffice-test.isteyim.com/resume/icon/twitter.svg"
+                  />
+                </div>
+              </li>
+              <li>
+                <div class="icon">
+                  <img
+                    src="https://backoffice-test.isteyim.com/resume/icon/youtube.svg"
+                  />
+                </div>
+              </li>
+              <li>
+                <div class="icon">
+                  <img
+                    src="https://backoffice-test.isteyim.com/resume/icon/linkedin.svg"
+                  />
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

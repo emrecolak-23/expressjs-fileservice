@@ -1,4 +1,8 @@
 import { Request, Response } from "express";
+import * as path from "path";
+import fs from "fs";
+import * as tmp from "tmp";
+import { exec } from "child_process";
 import { v4 as uuidv4 } from "uuid";
 import { FilesService } from "../services/files";
 import { S3UploadService } from "../services/aws";
@@ -14,6 +18,10 @@ import { NotAuthorizedError } from "../errors/not-authorized-error";
 import { CompanyLogoPublisher } from "../events/publishers/exception-handler/CompanyLogoPublisher";
 import { channel } from "..";
 import ErrorResponse from "../responses/error-response";
+import parsePhoneNumber from "libphonenumber-js";
+import { PDFDocument } from "pdf-lib";
+import ejs from "ejs";
+import { consulInstance } from "..";
 
 class FilesController {
   filesService;
@@ -187,6 +195,252 @@ class FilesController {
     );
 
     res.status(200).json(new SuccessResponse(signedUrl));
+  }
+
+  async getAllUsersFiles(req: Request, res: Response) {
+    const { userId } = req.body;
+    const files = await this.filesService.getAllUsersFiles(userId);
+
+    const result = await Promise.all(
+      files.map(async (file) => {
+        const signedUrl = await this.s3UploadService.generateSignedUrl(
+          file.path,
+          3600
+        );
+
+        return {
+          id: file._id,
+          fileType: file.fileType,
+          signedUrl,
+        };
+      })
+    );
+
+    return res.status(200).json(new SuccessResponse(result));
+  }
+
+  async getUsersCv(req: Request, res: Response) {
+    const { userId } = req.body;
+    const token = req.headers.authorization?.split(" ")[1];
+    const userInfo = await this.filesService.getUserInfoById(userId, token!);
+    console.log(userInfo, "userInfo");
+    const files = await this.filesService.getAllUsersFiles(userId);
+
+    const phoneNumber = parsePhoneNumber(userInfo.phoneNumber);
+
+    const htmlTemplatePath = path.join(
+      __dirname,
+      "..",
+      "..",
+      "resume-page.ejs"
+    );
+
+    let kvConfig = `config/file-service/cv-template`;
+    let consulCvTemplate: any;
+    const consulClient = consulInstance.getConsulClient();
+    consulCvTemplate = await consulClient.kv.get(kvConfig);
+    console.log(consulCvTemplate.Value, "consulCvTemplate");
+    let htmlContent = "";
+    try {
+      htmlContent = ejs.render(consulCvTemplate.Value, {
+        fullName: `${userInfo.name} ${userInfo.surname}`,
+        email: userInfo.email,
+        phoneNumber: phoneNumber?.formatInternational() || "",
+        profession: userInfo.profession.profession,
+        photoUrl: userInfo.photoUrl,
+        education: [
+          ...(userInfo?.highSchool
+            ? [
+                {
+                  date: `${new Date(
+                    userInfo.highSchool.startDate
+                  ).getFullYear()} - ${new Date(
+                    userInfo.highSchool.endDate
+                  ).getFullYear()}`,
+                  faculty: userInfo.highSchool.highSchoolType,
+                  university: userInfo.highSchool.name,
+                  department: userInfo.highSchool.department,
+                  grade: null,
+                  gradingSystem: null,
+                },
+              ]
+            : []),
+          ...(userInfo?.associate
+            ? userInfo.associate.map((associate: any) => {
+                const startYear = new Date(associate.startDate).getFullYear();
+                const endYear = new Date(associate.endDate).getFullYear();
+                return {
+                  date: `${startYear} - ${endYear}`,
+                  grade: associate.grade,
+                  gradingSystem: associate.gradingSystem,
+                  university: associate.university,
+                  faculty: associate.faculty,
+                  department: associate.department,
+                };
+              })
+            : []),
+          ...(userInfo?.bachelors
+            ? userInfo.bachelors.map((bachelor: any) => {
+                const startYear = new Date(bachelor.startDate).getFullYear();
+                const endYear = new Date(bachelor.endDate).getFullYear();
+                return {
+                  date: `${startYear} - ${endYear}`,
+                  grade: bachelor.grade,
+                  gradingSystem: bachelor.gradingSystem,
+                  university: bachelor.university,
+                  faculty: bachelor.faculty,
+                  department: bachelor.department,
+                };
+              })
+            : []),
+          ...(userInfo?.master
+            ? userInfo.master.map((master: any) => {
+                const startYear = new Date(master.startDate).getFullYear();
+                const endYear = new Date(master.endDate).getFullYear();
+                return {
+                  date: `${startYear} - ${endYear}`,
+                  grade: master.grade,
+                  gradingSystem: master.gradingSystem,
+                  university: master.university,
+                  faculty: master.faculty,
+                  department: master.department,
+                };
+              })
+            : []),
+          ...(userInfo?.doctorate
+            ? userInfo.doctorate.map((doctorate: any) => {
+                const startYear = new Date(doctorate.startDate).getFullYear();
+                const endYear = new Date(doctorate.endDate).getFullYear();
+                return {
+                  date: `${startYear} - ${endYear}`,
+                  grade: doctorate.grade,
+                  gradingSystem: doctorate.gradingSystem,
+                  university: doctorate.university,
+                  faculty: doctorate.faculty,
+                  department: doctorate.department,
+                  level: "Bachelor", // Yeni eklenen alan
+                };
+              })
+            : []),
+        ],
+        workExperience: userInfo.experiences.map((experience: any) => {
+          const startYear = new Date(experience.startDate).getFullYear();
+          const endYear = new Date(experience.endDate).getFullYear();
+          return {
+            date: `${startYear} - ${endYear}`,
+            position: experience.profession,
+            company: experience.company,
+          };
+        }),
+        certificates: userInfo.courses.map((course: any) => {
+          const year = new Date(course.date).getFullYear();
+          return {
+            date: year,
+            certificate: course.institution,
+            title: course.courseName,
+          };
+        }),
+        references: userInfo.references.map((reference: any) => {
+          return {
+            name: reference.fullName,
+            email: reference.email,
+            phone: reference.phoneNumber || "",
+            position: reference.position,
+            company: reference.company,
+          };
+        }),
+        fieldsToWork: userInfo.willingProfessions.map((profession: any) => {
+          return {
+            field: profession.profession,
+            experienceYears: profession.experience,
+          };
+        }),
+        languages: userInfo.foreignLanguages.map((language: any) => {
+          return {
+            language: language.language,
+            level: language.languageLevel,
+          };
+        }),
+        documents: [],
+        about: userInfo?.about,
+      });
+    } catch (error) {
+      console.log(error, "error");
+    }
+    console.log(htmlContent, "htmlContent");
+
+    const tempHtmlFilePath = await new Promise<string>((resolve, reject) => {
+      tmp.file(
+        {
+          discardDescriptor: true,
+          prefix: "resume-",
+          postfix: ".html",
+          mode: parseInt("0600", 8),
+        },
+        (err, filePath, fd, cleanupCallback) => {
+          if (err) return reject(err);
+
+          fs.writeFileSync(filePath, htmlContent);
+          resolve(filePath);
+        }
+      );
+    });
+    const tempPdfFileName = path.basename(tempHtmlFilePath, ".html") + ".pdf";
+    const tempPdfFilePath = path.join(
+      path.dirname(tempHtmlFilePath),
+      tempPdfFileName
+    );
+
+    exec(
+      `wkhtmltopdf --zoom 0.9 ${tempHtmlFilePath} ${tempPdfFilePath}`,
+      async (error, stdout, stderr) => {
+        if (error) {
+          console.error(`exec error: ${error}`);
+          return;
+        }
+
+        const cvFile = fs.readFileSync(tempPdfFilePath);
+
+        fs.unlinkSync(tempHtmlFilePath);
+
+        const fileBuffers = await Promise.all(
+          files.map(async (file) => {
+            try {
+              const buffer = await this.s3UploadService.getFileStream(
+                file.path
+              );
+              if (buffer instanceof Buffer) {
+                return buffer;
+              } else {
+                console.error(`Expected buffer but received ${typeof buffer}`);
+                return Buffer.alloc(0);
+              }
+            } catch (error) {
+              console.error(`Error fetching file from S3: ${error}`);
+              return Buffer.alloc(0);
+            }
+          })
+        );
+
+        const mergedPdf = await PDFDocument.create();
+
+        for (const pdfBytes of [cvFile, ...fileBuffers]) {
+          const pdf = await PDFDocument.load(pdfBytes);
+          const copiedPages = await mergedPdf.copyPages(
+            pdf,
+            pdf.getPageIndices()
+          );
+          copiedPages.forEach((page) => mergedPdf.addPage(page));
+        }
+
+        const mergedPdfBytes = await mergedPdf.save();
+        fs.writeFileSync(tempPdfFilePath, mergedPdfBytes);
+
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader("Content-Disposition", "attachment; filename=resume.pdf");
+        res.download(tempPdfFilePath, "resume.pdf");
+      }
+    );
   }
 }
 

@@ -6,8 +6,10 @@ import { S3UploadService } from "../services/aws";
 import { UsersService } from "../services/users";
 import { DownloadService } from "../services/download";
 import validate from "../middlewares/validate";
-import { fileIsExist, createFileUrl } from "../validations/files";
+import { fileIsExist, createFileUrl, getAllFiles } from "../validations/files";
 import { isValidUser } from "../guards/isValidUser";
+import { isAdmin } from "../guards/isAdmin";
+import { consulInstance } from "..";
 
 function filesRoutes(): Router {
   const router = express.Router();
@@ -30,6 +32,22 @@ function filesRoutes(): Router {
     validate(createFileUrl),
     filesController.getFileUrl.bind(filesController)
   );
+
+  router.post(
+    "/user/cv",
+    requireAuth,
+    isValidUser,
+    filesController.getUsersCv.bind(filesController)
+  );
+
+  router.post(
+    "/all/files",
+    requireAuth,
+    isAdmin,
+    validate(getAllFiles),
+    filesController.getAllUsersFiles.bind(filesController)
+  );
+
   router.post(
     "/isExist",
     requireAuth,

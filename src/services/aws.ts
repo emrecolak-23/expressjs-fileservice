@@ -7,6 +7,8 @@ import {
 import { Upload } from "@aws-sdk/lib-storage";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { InternalServerError } from "../errors/internal-server-error";
+import { BadRequestError } from "../errors/bad-request-error";
+import { Readable } from "stream";
 
 class S3UploadService {
   s3Client: S3Client;
@@ -88,6 +90,38 @@ class S3UploadService {
     }));
 
     return files;
+  }
+
+  async getFileStream(key: string): Promise<any> {
+    const params = {
+      Bucket: process.env.AWS_S3_BUCKET,
+      Key: key,
+    };
+
+    try {
+      const command = new GetObjectCommand(params);
+      const data = await this.s3Client.send(command);
+
+      const stream = data.Body as Readable;
+      if (!(stream instanceof Readable)) {
+        throw new BadRequestError("Expected Body to be a Readable stream");
+      }
+
+      const buffer = await this.streamToBuffer(stream);
+
+      return buffer;
+    } catch (error) {
+      console.error("Error fetching file from S3:", error);
+    }
+  }
+
+  private streamToBuffer(stream: Readable): Promise<Buffer> {
+    return new Promise((resolve, reject) => {
+      const chunks: Buffer[] = [];
+      stream.on("data", (chunk) => chunks.push(chunk));
+      stream.on("end", () => resolve(Buffer.concat(chunks)));
+      stream.on("error", reject);
+    });
   }
 }
 
